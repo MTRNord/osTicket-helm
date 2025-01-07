@@ -14,13 +14,13 @@ then
     sleep 2 
 
     # Wait for the MySQL instance to respond.
-    while ! mysql -h $MYSQL_PRIMARY_HOST -P $MYSQL_PRIMARY_PORT --password="$MYSQL_ROOT_PASSWORD"  -e "show databases" > /dev/null
+    while ! mysql --user="$MYSQL_USER" -h $MYSQL_PRIMARY_HOST -P $MYSQL_PRIMARY_PORT --password="$MYSQL_PASSWORD"  -e "show databases" "$MYSQL_DB" > /dev/null
     do 
         echo "Waiting for MySQL"
         sleep 5
     done
 
-    if ! mysql -h $MYSQL_PRIMARY_HOST -P $MYSQL_PRIMARY_PORT --password="$MYSQL_ROOT_PASSWORD"  -e "select * from ${MYSQL_DB}.ost_user" > /dev/null 
+    if ! mysql --user="$MYSQL_USER" -h $MYSQL_PRIMARY_HOST -P $MYSQL_PRIMARY_PORT --password="$MYSQL_PASSWORD"  -e "select * from ${MYSQL_DB}.ost_user" "$MYSQL_DB" > /dev/null 
     then
         echo "Starting installer."
         curl -c /tmp/cookies.txt -X POST \
