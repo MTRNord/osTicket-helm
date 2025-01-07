@@ -91,6 +91,8 @@ tolerations: []
 affinity: {}
 
 mysql:
+  enabled: true
+  externalAddress: "" # Address if you disable the mysql bitnami dependency
   architecture: standalone
   secondary:
     replicaCount: 1
