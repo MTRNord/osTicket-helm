@@ -1,7 +1,12 @@
 FROM docker.io/php:8.3-apache as base
 
 RUN apt update -y \
-    && DEBIAN_FRONTEND=noninteractive apt install -y curl git default-mysql-client unzip
+    && DEBIAN_FRONTEND=noninteractive apt install -y curl git default-mysql-client unzip cron
+
+# Setup cron
+RUN echo "*/5 * * * * nobody /usr/local/bin/php /var/www/html/api/cron.php" > /etc/cron.d/osticket \
+    && chmod 0644 /etc/cron.d/osticket \
+    && crontab /etc/cron.d/osticket
 
 # Need kubectl to support the installer on Kubernetes.
 RUN cd /usr/bin \
@@ -62,7 +67,7 @@ RUN cd /tmp \
           cp ${plugin}.phar /var/www/html/include/plugins; \
         done
 
-FROM base 
+FROM base
 
 # Use the default production configuration 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" && rm "$PHP_INI_DIR/php.ini-development"
