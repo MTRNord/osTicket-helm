@@ -1,12 +1,12 @@
-FROM docker.io/php:8.2-apache as base
+FROM docker.io/php:8.3-apache as base
 
 RUN apt update -y \
-    && DEBIAN_FRONTEND=noninteractive apt install -y curl git default-mysql-client
+    && DEBIAN_FRONTEND=noninteractive apt install -y curl git default-mysql-client unzip
 
 # Need kubectl to support the installer on Kubernetes.
 RUN cd /usr/bin \
-    && curl -LO https://dl.k8s.io/release/v1.26.3/bin/linux/amd64/kubectl \
-    && chmod 0555 kubectl 
+    && curl -LO https://dl.k8s.io/release/v1.32.0/bin/linux/arm64/kubectl \
+    && chmod 0555 kubectl
 
 # Force the logs to stdout/stderr 
 RUN ln -sfT /dev/stderr "/var/log/apache2/error.log" \
@@ -30,13 +30,21 @@ RUN DEBIAN_FRONTEND=noninteractive apt install -y \
 	&& docker-php-ext-enable memcached \
     && pecl install memcache-8.0 \
     && docker-php-ext-enable memcache
+# install zip extension
+RUN apt-get install -y \
+        libzip-dev \
+        zip \
+  && docker-php-ext-install zip
+
+RUN docker-php-ext-configure opcache --enable-opcache \
+    && docker-php-ext-install opcache
 
 FROM base as builder 
 
 # Use the default production configuration (this fixes https://github.com/osTicket/osTicket/issues/6574)
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" && rm "$PHP_INI_DIR/php.ini-development"
 
-RUN git clone --depth 1 -b v1.18 https://github.com/osTicket/osTicket.git /install 
+RUN git clone --depth 1 -b v1.18.1 https://github.com/osTicket/osTicket.git /install 
 RUN cd /install && php manage.php deploy --setup /var/www/html \
     && php manage.php deploy -v /var/www/html \
     && mkdir /var/www/html/include/container_config \
